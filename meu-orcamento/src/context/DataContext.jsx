@@ -56,13 +56,8 @@ export const DataProvider = ({ children }) => {
 
   // Buscar transações do Firestore
   useEffect(() => {
-    console.log('DataContext useEffect executado, user:', user);
-    if (!user) {
-      console.log('Usuário não autenticado, não carregando transações');
-      return;
-    }
+    if (!user) return;
 
-    console.log('Iniciando carregamento de transações para userId:', user.uid);
     setLoading(true);
     
     const q = query(
@@ -72,11 +67,8 @@ export const DataProvider = ({ children }) => {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      console.log('Firestore snapshot recebido:', snapshot.size, 'documentos');
-      
       const transactionsData = snapshot.docs.map(doc => {
         const data = doc.data();
-        console.log('Documento:', doc.id, data);
         
         return {
           id: doc.id,
@@ -85,7 +77,6 @@ export const DataProvider = ({ children }) => {
         };
       });
       
-      console.log('Transações processadas:', transactionsData.length);
       setTransactions(transactionsData);
       setLoading(false);
     }, (error) => {
@@ -104,13 +95,17 @@ export const DataProvider = ({ children }) => {
   // Filtrar transações baseado nos filtros ativos
   const getFilteredTransactions = () => {
     let filtered = [...transactions];
+    console.log('Total de transações:', transactions.length);
     
     // Filtro de data
     const { start, end } = getDateRange();
+    console.log('Filtro de data:', dateFilter, 'Range:', start, 'até', end);
+    
     if (start && end) {
       filtered = filtered.filter(t => 
         t.date >= start && t.date <= end
       );
+      console.log('Transações após filtro de data:', filtered.length);
     }
     
     // Filtro de categoria
@@ -118,8 +113,10 @@ export const DataProvider = ({ children }) => {
       filtered = filtered.filter(t => 
         categoryFilter.includes(t.category)
       );
+      console.log('Transações após filtro de categoria:', filtered.length);
     }
     
+    console.log('Transações finais filtradas:', filtered.length);
     return filtered;
   };
 
