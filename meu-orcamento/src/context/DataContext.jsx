@@ -165,8 +165,9 @@ export const DataProvider = ({ children }) => {
       const existing = acc.find(item => item.name === t.category);
       if (existing) {
         existing.value += t.amount;
+        existing.count += 1;
       } else {
-        acc.push({ name: t.category, value: t.amount });
+        acc.push({ name: t.category, value: t.amount, count: 1 });
       }
       return acc;
     }, []);
@@ -177,22 +178,45 @@ export const DataProvider = ({ children }) => {
       const existing = acc.find(item => item.month === monthKey);
       if (existing) {
         existing.amount += t.amount;
+        existing.transactions += 1;
       } else {
         acc.push({ 
           month: monthKey, 
           amount: t.amount,
+          transactions: 1,
           date: t.date 
         });
       }
       return acc;
     }, []);
     
+    // Dados por categoria e mês (para análise detalhada)
+    const categoryMonthlyData = filtered.reduce((acc, t) => {
+      const monthKey = format(t.date, 'MMM yyyy');
+      const key = `${t.category}-${monthKey}`;
+      
+      if (acc[key]) {
+        acc[key].amount += t.amount;
+        acc[key].count += 1;
+      } else {
+        acc[key] = {
+          category: t.category,
+          month: monthKey,
+          amount: t.amount,
+          count: 1,
+          date: t.date
+        };
+      }
+      return acc;
+    }, {});
+    
     // Ordenar por data
     monthlyData.sort((a, b) => a.date - b.date);
     
     return {
       categoryData: categoryData.sort((a, b) => b.value - a.value),
-      monthlyData: monthlyData.map(({ month, amount }) => ({ month, amount }))
+      monthlyData: monthlyData.map(({ month, amount, transactions }) => ({ month, amount, transactions })),
+      categoryMonthlyData: Object.values(categoryMonthlyData).sort((a, b) => a.date - b.date)
     };
   };
 

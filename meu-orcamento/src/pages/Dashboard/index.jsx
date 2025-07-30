@@ -10,9 +10,8 @@ import {
   FaCog
 } from 'react-icons/fa';
 import {
-  PieChart,
-  Pie,
-  Cell,
+  BarChart,
+  Bar,
   LineChart,
   Line,
   XAxis,
@@ -20,7 +19,9 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
+  AreaChart,
+  Area
 } from 'recharts';
 import { useData } from '../../context/DataContext';
 import KPICard from '../../components/KPICard';
@@ -32,6 +33,8 @@ import { ptBR } from 'date-fns/locale';
 
 const Dashboard = () => {
   const [showRulesManager, setShowRulesManager] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [chartType, setChartType] = useState('bar'); // 'bar', 'area'
   const { 
     loading, 
     getFilteredTransactions, 
@@ -52,22 +55,30 @@ const Dashboard = () => {
 
   const transactions = getFilteredTransactions();
   const stats = getStats();
-  const { categoryData, monthlyData } = getChartData();
+  const { categoryData, monthlyData, categoryMonthlyData } = getChartData();
 
-  // Cores para o gráfico de pizza
+  // Cores para os gráficos
   const COLORS = [
-    '#0ea5e9', // primary-500
-    '#38bdf8', // primary-400
-    '#7dd3fc', // primary-300
-    '#0284c7', // primary-600
-    '#0369a1', // primary-700
-    '#075985', // primary-800
-    '#0c4a6e', // primary-900
-    '#e0f2fe', // primary-100
+    '#0ea5e9', '#38bdf8', '#7dd3fc', '#0284c7', 
+    '#0369a1', '#075985', '#0c4a6e', '#e0f2fe',
+    '#f59e0b', '#d97706', '#92400e', '#78350f'
   ];
 
-  // Formatar dados para o gráfico de pizza
-  const pieChartData = categoryData.slice(0, 8); // Limitar a 8 categorias
+  // Formatar dados para o gráfico de barras
+  const barChartData = categoryData.slice(0, 10).map((item, index) => ({
+    ...item,
+    fill: COLORS[index % COLORS.length]
+  }));
+
+  // Dados filtrados por categoria selecionada
+  const filteredTransactions = selectedCategory 
+    ? transactions.filter(t => t.category === selectedCategory)
+    : transactions;
+
+  // Handler para clique nas barras
+  const handleBarClick = (data) => {
+    setSelectedCategory(selectedCategory === data.name ? null : data.name);
+  };
 
   // Projeção de gastos
   const calculateProjection = () => {
@@ -195,54 +206,139 @@ const Dashboard = () => {
 
       {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Gráfico de Pizza */}
+        {/* Gráfico de Barras Interativo */}
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Gastos por Categoria
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={pieChartData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Gastos por Categoria
+              {selectedCategory && (
+                <span className="text-sm font-normal text-primary-600 ml-2">
+                  (Filtrado: {selectedCategory})
+                </span>
+              )}
+            </h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setChartType('bar')}
+                className={`px-3 py-1 text-xs rounded ${
+                  chartType === 'bar' 
+                    ? 'bg-primary-500 text-white' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
               >
-                {pieChartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-              />
-            </PieChart>
+                Barras
+              </button>
+              <button
+                onClick={() => setChartType('area')}
+                className={`px-3 py-1 text-xs rounded ${
+                  chartType === 'area' 
+                    ? 'bg-primary-500 text-white' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Área
+              </button>
+            </div>
+          </div>
+          
+          {selectedCategory && (
+            <div className="mb-3">
+              <button
+                onClick={() => setSelectedCategory(null)}
+                className="text-xs text-red-600 hover:text-red-800 flex items-center"
+              >
+                ✕ Limpar filtro de categoria
+              </button>
+            </div>
+          )}
+
+          <ResponsiveContainer width="100%" height={350}>
+            {chartType === 'bar' ? (
+              <BarChart data={barChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="name" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={100}
+                  interval={0}
+                />
+                <YAxis />
+                <Tooltip
+                  formatter={(value) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Valor']}
+                  cursor={{ fill: 'rgba(14, 165, 233, 0.1)' }}
+                />
+                <Bar 
+                  dataKey="value" 
+                  onClick={handleBarClick}
+                  cursor="pointer"
+                  radius={[4, 4, 0, 0]}
+                  animationDuration={800}
+                />
+              </BarChart>
+            ) : (
+              <AreaChart data={barChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="name" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={100}
+                  interval={0}
+                />
+                <YAxis />
+                <Tooltip
+                  formatter={(value) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Valor']}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#0ea5e9"
+                  fill="#0ea5e9"
+                  fillOpacity={0.6}
+                  animationDuration={800}
+                />
+              </AreaChart>
+            )}
           </ResponsiveContainer>
         </div>
 
-        {/* Gráfico de Linha */}
+        {/* Gráfico de Linha Melhorado */}
         <div className="card">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Evolução dos Gastos
+            Evolução dos Gastos Mensais
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={350}>
             <LineChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip
-                formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis 
+                dataKey="month" 
+                stroke="#666"
+                tick={{ fontSize: 12 }}
               />
-              <Legend />
+              <YAxis 
+                stroke="#666"
+                tick={{ fontSize: 12 }}
+              />
+              <Tooltip
+                formatter={(value) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Gastos']}
+                labelStyle={{ color: '#333' }}
+                contentStyle={{ 
+                  backgroundColor: '#fff', 
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                }}
+              />
               <Line
                 type="monotone"
                 dataKey="amount"
                 name="Gastos"
                 stroke="#0ea5e9"
-                strokeWidth={2}
+                strokeWidth={3}
+                dot={{ fill: '#0ea5e9', strokeWidth: 2, r: 6 }}
+                activeDot={{ r: 8, stroke: '#0ea5e9', strokeWidth: 2 }}
+                animationDuration={1000}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -287,10 +383,92 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Análise mensal da categoria selecionada */}
+      {selectedCategory && (
+        <div className="card mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Evolução Mensal - {selectedCategory}
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={categoryMonthlyData.filter(d => d.category === selectedCategory)}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip
+                formatter={(value, name) => [
+                  `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+                  'Gastos'
+                ]}
+                labelFormatter={(label) => `Mês: ${label}`}
+              />
+              <Area
+                type="monotone"
+                dataKey="amount"
+                stroke="#f59e0b"
+                fill="#f59e0b"
+                fillOpacity={0.3}
+                animationDuration={800}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Gráfico adicional - Top 5 categorias com detalhamento */}
+      <div className="card mb-8">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Análise Detalhada das Principais Categorias
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {categoryData.slice(0, 5).map((category, index) => {
+            const percentage = ((category.value / stats.total) * 100).toFixed(1);
+            const avgPerTransaction = (category.value / category.count).toFixed(2);
+            return (
+              <div 
+                key={category.name}
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-300 transform hover:scale-105 ${
+                  selectedCategory === category.name 
+                    ? 'border-primary-500 bg-primary-50 shadow-lg' 
+                    : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50 hover:shadow-md'
+                }`}
+                onClick={() => handleBarClick(category)}
+              >
+                <div className="text-center">
+                  <div 
+                    className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-lg transition-transform duration-200 hover:rotate-12"
+                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                  >
+                    {category.name.charAt(0)}
+                  </div>
+                  <h4 className="font-medium text-sm text-gray-900 mb-1">
+                    {category.name}
+                  </h4>
+                  <p className="text-lg font-bold text-gray-900">
+                    R$ {category.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </p>
+                  <p className="text-xs text-gray-500 mb-1">
+                    {percentage}% do total
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    {category.count} transações
+                  </p>
+                  <p className="text-xs text-green-600">
+                    Média: R$ {avgPerTransaction}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Lista de Transações com Editor de Categoria */}
       <TransactionsList 
-        transactions={transactions.slice(0, 20)} 
-        title="Transações Recentes"
+        transactions={filteredTransactions.slice(0, 20)} 
+        title={selectedCategory 
+          ? `Transações da Categoria: ${selectedCategory}` 
+          : "Transações Recentes"
+        }
       />
 
       {/* Modal do Gerenciador de Regras */}
