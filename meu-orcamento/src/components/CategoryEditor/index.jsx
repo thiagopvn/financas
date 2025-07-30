@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { FiSave, FiX } from 'react-icons/fi';
 
 const CategoryEditor = ({ transaction, onClose, onUpdate }) => {
   const [selectedCategory, setSelectedCategory] = useState(transaction.category);
@@ -31,7 +32,8 @@ const CategoryEditor = ({ transaction, onClose, onUpdate }) => {
     try {
       const transactionRef = doc(db, 'transactions', transaction.id);
       await updateDoc(transactionRef, {
-        category: selectedCategory
+        category: selectedCategory,
+        updatedAt: Timestamp.now()
       });
       
       onUpdate && onUpdate({ ...transaction, category: selectedCategory });
@@ -75,16 +77,18 @@ const CategoryEditor = ({ transaction, onClose, onUpdate }) => {
         <div className="flex justify-end space-x-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+            className="flex items-center px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
             disabled={loading}
           >
+            <FiX className="mr-2" size={16} />
             Cancelar
           </button>
           <button
             onClick={handleSave}
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+            disabled={loading || selectedCategory === transaction.category}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
+            <FiSave className="mr-2" size={16} />
             {loading ? 'Salvando...' : 'Salvar'}
           </button>
         </div>

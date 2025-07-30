@@ -193,34 +193,41 @@ const Upload = () => {
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3">
-            <button
-              onClick={() => {
-                setFile(null);
-                setTransactions([]);
-                setUploadStatus(null);
-              }}
-              className="btn-secondary"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={saveTransactions}
-              disabled={isProcessing}
-              className="btn-primary flex items-center space-x-2"
-            >
-              {isProcessing ? (
-                <>
-                  <FaSpinner className="animate-spin" />
-                  <span>Salvando...</span>
-                </>
-              ) : (
-                <>
-                  <FaCheckCircle />
-                  <span>Confirmar e Salvar</span>
-                </>
-              )}
-            </button>
+          <div className="flex justify-between">
+            <div className="text-sm text-gray-600">
+              <p>Total a ser importado: <span className="font-bold">
+                R$ {transactions.reduce((sum, t) => sum + t.amount, 0).toFixed(2)}
+              </span></p>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setFile(null);
+                  setTransactions([]);
+                  setUploadStatus(null);
+                }}
+                className="btn-secondary"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={saveTransactions}
+                disabled={isProcessing}
+                className="btn-primary flex items-center space-x-2"
+              >
+                {isProcessing ? (
+                  <>
+                    <FaSpinner className="animate-spin" />
+                    <span>Salvando...</span>
+                  </>
+                ) : (
+                  <>
+                    <FaCheckCircle />
+                    <span>Confirmar e Salvar</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       );

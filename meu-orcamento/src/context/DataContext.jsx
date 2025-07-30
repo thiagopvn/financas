@@ -1,6 +1,6 @@
 // src/context/DataContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../hooks/useAuth';
 import { startOfMonth, endOfMonth, subDays, format } from 'date-fns';
@@ -220,6 +220,17 @@ export const DataProvider = ({ children }) => {
     };
   };
 
+  // Função para deletar transação
+  const deleteTransaction = async (transactionId) => {
+    try {
+      await deleteDoc(doc(db, 'transactions', transactionId));
+      return true;
+    } catch (error) {
+      console.error('Erro ao deletar transação:', error);
+      return false;
+    }
+  };
+
   const value = {
     transactions,
     loading,
@@ -232,7 +243,8 @@ export const DataProvider = ({ children }) => {
     getFilteredTransactions,
     getAllCategories,
     getStats,
-    getChartData
+    getChartData,
+    deleteTransaction
   };
 
   return (

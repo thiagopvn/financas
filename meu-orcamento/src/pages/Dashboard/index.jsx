@@ -39,7 +39,8 @@ const Dashboard = () => {
     loading, 
     getFilteredTransactions, 
     getStats, 
-    getChartData 
+    getChartData,
+    deleteTransaction 
   } = useData();
 
   if (loading) {
@@ -464,11 +465,12 @@ const Dashboard = () => {
 
       {/* Lista de Transações com Editor de Categoria */}
       <TransactionsList 
-        transactions={filteredTransactions.slice(0, 20)} 
+        transactions={filteredTransactions} 
         title={selectedCategory 
           ? `Transações da Categoria: ${selectedCategory}` 
-          : "Transações Recentes"
+          : "Todas as Transações"
         }
+        onDeleteTransaction={deleteTransaction}
       />
 
       {/* Modal do Gerenciador de Regras */}

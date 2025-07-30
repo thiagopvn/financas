@@ -1,6 +1,6 @@
 // src/components/Filters/index.jsx
 import { useState } from 'react';
-import { FaCalendarAlt, FaFilter, FaTimes } from 'react-icons/fa';
+import { FaCalendarAlt, FaFilter, FaTimes, FaRedo } from 'react-icons/fa';
 import { useData } from '../../context/DataContext';
 
 const Filters = () => {
@@ -35,8 +35,14 @@ const Filters = () => {
     setShowCategoryFilter(false);
   };
 
+  const clearAllFilters = () => {
+    setDateFilter('all');
+    setCategoryFilter([]);
+    setShowCategoryFilter(false);
+  };
+
   return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+    <div className="flex flex-col sm:flex-row gap-4 mb-6 items-start">
       {/* Filtro de Data */}
       <div className="flex items-center space-x-2">
         <FaCalendarAlt className="text-gray-500" />
@@ -115,6 +121,18 @@ const Filters = () => {
           </div>
         )}
       </div>
+
+      {/* Botão para limpar todos os filtros */}
+      {(dateFilter !== 'all' || categoryFilter.length > 0) && (
+        <button
+          onClick={clearAllFilters}
+          className="flex items-center space-x-2 px-3 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+          title="Limpar todos os filtros"
+        >
+          <FaRedo />
+          <span>Limpar Filtros</span>
+        </button>
+      )}
 
       {/* Tags de categorias selecionadas */}
       {categoryFilter.length > 0 && (
