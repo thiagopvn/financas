@@ -25,7 +25,7 @@ import {
 } from 'recharts';
 import { useData } from '../../context/DataContext';
 import KPICard from '../../components/KPICard';
-import Filters from '../../components/Filters';
+import AdvancedFilters from '../../components/AdvancedFilters';
 import TransactionsList from '../../components/TransactionsList';
 import CategoryRulesManager from '../../components/CategoryRulesManager';
 import { format } from 'date-fns';
@@ -172,8 +172,8 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Filtros */}
-      <Filters />
+      {/* Filtros Avançados */}
+      <AdvancedFilters />
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

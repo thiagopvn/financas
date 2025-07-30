@@ -4,6 +4,7 @@ import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc } from 'f
 import { db } from '../firebase/config';
 import { useAuth } from '../hooks/useAuth';
 import { startOfMonth, endOfMonth, subDays, format } from 'date-fns';
+import { advancedSearchService } from '../services/advancedSearch';
 
 const DataContext = createContext({});
 
@@ -21,10 +22,17 @@ export const DataProvider = ({ children }) => {
   const [dateFilter, setDateFilter] = useState('all');
   const [customDateRange, setCustomDateRange] = useState({ start: null, end: null });
   const [categoryFilter, setCategoryFilter] = useState([]);
+  const [advancedSearch, setAdvancedSearch] = useState(null);
+  const [advancedDateRange, setAdvancedDateRange] = useState({ start: null, end: null });
   const { user } = useAuth();
 
   // Calcular range de datas baseado no filtro
   const getDateRange = () => {
+    // Priorizar filtro avançado de datas
+    if (advancedDateRange.start && advancedDateRange.end) {
+      return { start: advancedDateRange.start, end: advancedDateRange.end };
+    }
+
     const now = new Date();
     let start, end;
 
@@ -108,11 +116,20 @@ export const DataProvider = ({ children }) => {
       );
     }
     
-    // Filtro de categoria
+    // Filtro de categoria (tradicional - mantido para compatibilidade)
     if (categoryFilter.length > 0) {
       filtered = filtered.filter(t => 
         categoryFilter.includes(t.category)
       );
+    }
+    
+    // Aplicar busca avançada
+    if (advancedSearch) {
+      filtered = advancedSearchService.filterTransactions(filtered, advancedSearch);
+      // Ordenar por relevância se houver termo de busca
+      if (advancedSearch.term) {
+        filtered = advancedSearchService.sortByRelevance(filtered, advancedSearch);
+      }
     }
     
     return filtered;
@@ -240,6 +257,10 @@ export const DataProvider = ({ children }) => {
     setCustomDateRange,
     categoryFilter,
     setCategoryFilter,
+    advancedSearch,
+    setAdvancedSearch,
+    advancedDateRange,
+    setAdvancedDateRange,
     getFilteredTransactions,
     getAllCategories,
     getStats,

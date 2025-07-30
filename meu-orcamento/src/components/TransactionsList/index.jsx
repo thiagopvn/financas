@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { FiEdit2, FiTrash2, FiFilter, FiDownload, FiEye } from 'react-icons/fi';
-import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { FaSort, FaSortUp, FaSortDown, FaStar } from 'react-icons/fa';
 import CategoryEditor from '../CategoryEditor';
+import { useData } from '../../context/DataContext';
+import { advancedSearchService } from '../../services/advancedSearch';
 
 const TransactionsList = ({ transactions, title = "Transações", showActions = true, enableDelete = true, onDeleteTransaction }) => {
   const [editingTransaction, setEditingTransaction] = useState(null);
@@ -13,6 +15,8 @@ const TransactionsList = ({ transactions, title = "Transações", showActions = 
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTransactions, setSelectedTransactions] = useState([]);
+  
+  const { advancedSearch } = useData();
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -140,6 +144,37 @@ const TransactionsList = ({ transactions, title = "Transações", showActions = 
     link.click();
   };
 
+  // Destacar termos de busca no texto
+  const highlightSearchTerms = (text) => {
+    if (!advancedSearch?.term || !text) return text;
+    
+    const highlighted = advancedSearchService.highlightMatches(
+      text, 
+      advancedSearch.term, 
+      advancedSearch.caseSensitive
+    );
+    
+    return <span dangerouslySetInnerHTML={{ __html: highlighted }} />;
+  };
+
+  // Verificar se é resultado de busca avançada
+  const isAdvancedSearchResult = advancedSearch && advancedSearch.term;
+  
+  // Mostrar score de relevância se disponível
+  const showRelevanceScore = (transaction) => {
+    if (!isAdvancedSearchResult || !transaction.relevanceScore) return null;
+    
+    const score = Math.round((transaction.relevanceScore / 10) * 100);
+    if (score < 30) return null; // Só mostrar scores relevantes
+    
+    return (
+      <div className="flex items-center space-x-1 text-xs text-orange-600">
+        <FaStar size={10} />
+        <span>{score}%</span>
+      </div>
+    );
+  };
+
   if (!transactions || transactions.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
@@ -160,6 +195,12 @@ const TransactionsList = ({ transactions, title = "Transações", showActions = 
               <p className="text-sm text-gray-600">
                 {filteredAndSortedTransactions.length} de {transactions.length} transações
                 {selectedTransactions.length > 0 && ` (${selectedTransactions.length} selecionadas)`}
+                {isAdvancedSearchResult && (
+                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                    <FaStar size={10} className="mr-1" />
+                    Busca: "{advancedSearch.term}"
+                  </span>
+                )}
               </p>
             </div>
             
@@ -273,13 +314,16 @@ const TransactionsList = ({ transactions, title = "Transações", showActions = 
                     {format(transaction.date, 'dd/MM/yyyy', { locale: ptBR })}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    <div className="max-w-xs truncate" title={transaction.description}>
-                      {transaction.description}
+                    <div className="max-w-xs" title={transaction.description}>
+                      <div className={isAdvancedSearchResult ? 'font-medium' : 'truncate'}>
+                        {highlightSearchTerms(transaction.description)}
+                      </div>
+                      {showRelevanceScore(transaction)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(transaction.category)}`}>
-                      {transaction.category}
+                      {highlightSearchTerms(transaction.category)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
