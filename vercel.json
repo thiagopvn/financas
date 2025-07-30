@@ -1,0 +1,12 @@
+{
+  "buildCommand": "cd meu-orcamento && npm run build",
+  "outputDirectory": "meu-orcamento/dist",
+  "installCommand": "cd meu-orcamento && npm install",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
