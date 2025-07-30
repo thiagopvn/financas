@@ -56,8 +56,13 @@ export const DataProvider = ({ children }) => {
 
   // Buscar transações do Firestore
   useEffect(() => {
-    if (!user) return;
+    console.log('DataContext useEffect executado, user:', user);
+    if (!user) {
+      console.log('Usuário não autenticado, não carregando transações');
+      return;
+    }
 
+    console.log('Iniciando carregamento de transações para userId:', user.uid);
     setLoading(true);
     
     const q = query(
@@ -67,12 +72,20 @@ export const DataProvider = ({ children }) => {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const transactionsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().date.toDate() // Converter Timestamp para Date
-      }));
+      console.log('Firestore snapshot recebido:', snapshot.size, 'documentos');
       
+      const transactionsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log('Documento:', doc.id, data);
+        
+        return {
+          id: doc.id,
+          ...data,
+          date: data.date?.toDate ? data.date.toDate() : new Date(data.date) // Converter Timestamp para Date
+        };
+      });
+      
+      console.log('Transações processadas:', transactionsData.length);
       setTransactions(transactionsData);
       setLoading(false);
     }, (error) => {
