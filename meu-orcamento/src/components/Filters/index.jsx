@@ -14,6 +14,7 @@ const Filters = () => {
   } = useData();
 
   const dateOptions = [
+    { value: 'all', label: 'Todas as transações' },
     { value: 'last30', label: 'Últimos 30 dias' },
     { value: 'thisMonth', label: 'Este mês' },
     { value: 'lastMonth', label: 'Mês passado' },

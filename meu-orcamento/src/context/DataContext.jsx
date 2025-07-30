@@ -18,7 +18,7 @@ export const useData = () => {
 export const DataProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dateFilter, setDateFilter] = useState('thisMonth');
+  const [dateFilter, setDateFilter] = useState('all');
   const [customDateRange, setCustomDateRange] = useState({ start: null, end: null });
   const [categoryFilter, setCategoryFilter] = useState([]);
   const { user } = useAuth();
@@ -46,9 +46,13 @@ export const DataProvider = ({ children }) => {
         start = customDateRange.start;
         end = customDateRange.end;
         break;
+      case 'all':
+        start = null;
+        end = null;
+        break;
       default:
-        start = startOfMonth(now);
-        end = endOfMonth(now);
+        start = null;
+        end = null;
     }
 
     return { start, end };
@@ -95,17 +99,13 @@ export const DataProvider = ({ children }) => {
   // Filtrar transações baseado nos filtros ativos
   const getFilteredTransactions = () => {
     let filtered = [...transactions];
-    console.log('Total de transações:', transactions.length);
     
     // Filtro de data
     const { start, end } = getDateRange();
-    console.log('Filtro de data:', dateFilter, 'Range:', start, 'até', end);
-    
     if (start && end) {
       filtered = filtered.filter(t => 
         t.date >= start && t.date <= end
       );
-      console.log('Transações após filtro de data:', filtered.length);
     }
     
     // Filtro de categoria
@@ -113,10 +113,8 @@ export const DataProvider = ({ children }) => {
       filtered = filtered.filter(t => 
         categoryFilter.includes(t.category)
       );
-      console.log('Transações após filtro de categoria:', filtered.length);
     }
     
-    console.log('Transações finais filtradas:', filtered.length);
     return filtered;
   };
 
